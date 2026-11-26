@@ -617,7 +617,7 @@ struct SideBar: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if !browser.squarePins.isEmpty || ghostSquare != nil {
                         pinned
-                            .padding(.bottom, 10)
+                            .padding(.bottom, browser.squarePins.isEmpty ? 10 : pinsTailHere)
                             // A square carried down over the rows passes
                             // over them, not under.
                             .zIndex(carriedPin ? 1 : 0)
@@ -798,7 +798,7 @@ struct SideBar: View {
                         }
                     }
                 }
-                .padding(.bottom, 10)
+                .padding(.bottom, pinsTail(folder: !folders.isEmpty || (prefs.usesTabGroups && !groups.isEmpty), rows: !listed.isEmpty || !rest.isEmpty))
             }
             if showsMarks {
                 SideBookmarks(browser: browser, prefs: prefs, bookmarks: browser.bookmarks, compact: icons)
@@ -949,9 +949,21 @@ struct SideBar: View {
     /// Where the rows stop and the window's own drag area starts. Added up
     /// from what was drawn rather than measured: a measurement would arrive a
     /// frame late, and for one frame the whole column would drag the window.
+    /// The room under the squares: more before a folder, a row's own gap
+    /// before rows, and none before the row that makes a tab, which brings
+    /// that gap itself, so a space with pins and one without keep it as far
+    /// from what is above.
+    private func pinsTail(folder: Bool, rows: Bool) -> CGFloat {
+        folder ? 10 : rows ? Self.gap : 0
+    }
+    private var pinsTailHere: CGFloat {
+        pinsTail(folder: browser.showsPinFolderRows || (prefs.usesTabGroups && !browser.tabGroups.isEmpty),
+                 rows: !browser.listedPins.isEmpty || !looseTabs.isEmpty)
+    }
+
     private var rowsEnd: CGFloat {
         let pins = browser.squarePins.count
-        let pinBlock = pins == 0 ? 0 : (pinCells(pins).map(\.maxY).max() ?? 0) + 10
+        let pinBlock = pins == 0 ? 0 : (pinCells(pins).map(\.maxY).max() ?? 0) + pinsTailHere
         return top + pinBlock + marksHeight + rowsHeight
     }
 
