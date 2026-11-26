@@ -295,9 +295,14 @@ private final class PageFindHarness: NSObject, NSApplicationDelegate {
         """)
         try? await Task.sleep(for: .milliseconds(50))
         check((try? await evaluate(quiet)) as? Bool == false, "A selection made by hand keeps the page's own colour")
+        let painting = """
+        [...document.adoptedStyleSheets].some(sheet => [...sheet.cssRules].some(rule => (rule.selectorText || '').includes('::highlight')))
+        """
+        check((try? await evaluate(painting)) as? Bool == false, "The matches step aside while a selection is made by hand")
         _ = await update("orchid")
         try? await Task.sleep(for: .milliseconds(50))
         check((try? await evaluate(quiet)) as? Bool == true, "Next draws the match's selection quiet again")
+        check((try? await evaluate(painting)) as? Bool == true, "Next paints the matches again")
         _ = await clear()
         try? await Task.sleep(for: .milliseconds(50))
         check((try? await evaluate(quiet)) as? Bool == false, "Clear leaves no quiet selection behind")

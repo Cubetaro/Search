@@ -708,9 +708,21 @@ final class PageFind {
         }
     }
 
+    // A selection made by hand, not just a caret: the matches step aside
+    // for it, as Safari's do, rather than mixing their colours with it.
+    function handSelected(win) {
+        try {
+            const selection = win.getSelection();
+            return !!selection && selection.rangeCount > 0 && !selection.isCollapsed;
+        } catch (_) {
+            return false;
+        }
+    }
+
     function settle(highlights) {
         if (!state.painted.includes(highlights)) return;
-        const rules = onCurrent(highlights.win) ? findRules + quietSelection : findRules;
+        const rules = onCurrent(highlights.win) ? findRules + quietSelection
+            : handSelected(highlights.win) ? "" : findRules;
         if (highlights.rules === rules) return;
         highlights.rules = rules;
         try { highlights.sheet.replaceSync(rules); } catch (_) {}
