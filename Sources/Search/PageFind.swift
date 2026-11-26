@@ -692,6 +692,30 @@ final class PageFind {
         + "::highlight(search-find-current) { background-color: #ff9632; color: #000; text-decoration: none; text-shadow: none; }";
     const quietSelection = "::selection { background-color: transparent; color: #000; }";
 
+    // The selection drawn quiet only while it is the current match itself:
+    // a selection made by hand beside the bar keeps the page's own colour.
+    function onCurrent(win) {
+        const current = state.matches[state.index];
+        if (current?.kind !== "range" || current.win !== win) return false;
+        try {
+            const selection = win.getSelection();
+            if (!selection || selection.rangeCount !== 1) return false;
+            const range = selection.getRangeAt(0);
+            return range.compareBoundaryPoints(win.Range.START_TO_START, current.range) === 0
+                && range.compareBoundaryPoints(win.Range.END_TO_END, current.range) === 0;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function settle(highlights) {
+        if (!state.painted.includes(highlights)) return;
+        const rules = onCurrent(highlights.win) ? findRules + quietSelection : findRules;
+        if (highlights.rules === rules) return;
+        highlights.rules = rules;
+        try { highlights.sheet.replaceSync(rules); } catch (_) {}
+    }
+
     // Where Settings asks for it, the page is under a faint veil while
     // finding, all but the current match: cast by the shadow of an invisible
     // box laid over that one.
@@ -748,6 +772,7 @@ final class PageFind {
         unring();
         for (const highlights of state.painted) {
             try { highlights.all.clear(); highlights.current.clear(); } catch (_) {}
+            highlights.rules = findRules;
             try { highlights.sheet.replaceSync(findRules); } catch (_) {}
         }
         state.painted = [];
@@ -761,8 +786,10 @@ final class PageFind {
             sheet.replaceSync(findRules);
             const current = new win.Highlight();
             current.priority = 1;
-            highlights = { sheet, all: new win.Highlight(), current };
+            highlights = { sheet, all: new win.Highlight(), current, win, rules: findRules };
             state.highlights.set(win, highlights);
+            const made = highlights;
+            doc.addEventListener("selectionchange", () => settle(made));
         }
         // A page may set its own sheets, or these names, again at any time.
         if (!doc.adoptedStyleSheets.includes(highlights.sheet)) {
@@ -804,9 +831,7 @@ final class PageFind {
         const current = state.matches[state.index];
         if (current?.kind === "range") {
             try { painted.get(current.win)?.current.add(current.range); } catch (_) {}
-            for (const highlights of state.painted) {
-                try { highlights.sheet.replaceSync(findRules + quietSelection); } catch (_) {}
-            }
+            for (const highlights of state.painted) settle(highlights);
         }
         ring(current);
     }
