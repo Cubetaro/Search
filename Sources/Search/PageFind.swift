@@ -691,6 +691,7 @@ final class PageFind {
     const findRules = "::highlight(search-find-match) { background-color: #ffff00; color: #000; text-decoration: none; text-shadow: none; }"
         + "::highlight(search-find-current) { background-color: #ff9632; color: #000; text-decoration: none; text-shadow: none; }";
     const quietSelection = "::selection { background-color: transparent; color: #000; }";
+    const handSelection = "::selection { background-color: Highlight; color: HighlightText; }";
 
     // The selection drawn quiet only while it is the current match itself:
     // a selection made by hand beside the bar keeps the page's own colour.
@@ -708,8 +709,9 @@ final class PageFind {
         }
     }
 
-    // A selection made by hand, not just a caret: the matches step aside
-    // for it, as Safari's do, rather than mixing their colours with it.
+    // A selection made by hand, not just a caret: drawn in the Mac's own
+    // selection colour, solid, as Safari's is, so it covers the matches it
+    // crosses cleanly rather than mixing with their yellow.
     function handSelected(win) {
         try {
             const selection = win.getSelection();
@@ -722,7 +724,7 @@ final class PageFind {
     function settle(highlights) {
         if (!state.painted.includes(highlights)) return;
         const rules = onCurrent(highlights.win) ? findRules + quietSelection
-            : handSelected(highlights.win) ? "" : findRules;
+            : handSelected(highlights.win) ? findRules + handSelection : findRules;
         if (highlights.rules === rules) return;
         highlights.rules = rules;
         try { highlights.sheet.replaceSync(rules); } catch (_) {}
