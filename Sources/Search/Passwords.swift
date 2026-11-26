@@ -14,7 +14,8 @@ struct PasswordsPanel: View {
         Plate("Passwords", width: 620, close: { browser.managing = false }) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 10) {
-                    Hunt(text: $browser.hunting, prompt: "Search sites and accounts", focus: $hunting)
+                    Hunt(text: $browser.hunting, prompt: "Search sites and accounts", focus: $hunting,
+                         count: (browser.shownSites.reduce(0) { $0 + $1.logins.count }, "password"))
                     Pill(adding ? "Cancel" : "Add", filled: !adding) { adding.toggle() }
                 }
 
@@ -68,9 +69,6 @@ struct PasswordsPanel: View {
                         }
                         .disabled(browser.forgetting)
                     }
-                    Text(browser.saved.count == 1 ? "1 password" : "\(browser.saved.count) passwords")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Palette.muted)
                 }
                 Text("macOS asks once for that browser's keychain key. Nothing is changed there; everything lands in your own keychain, under Search.")
                     .font(.system(size: 11.5))

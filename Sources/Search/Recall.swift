@@ -55,7 +55,8 @@ struct HistoryPanel: View {
     var body: some View {
         Plate("History", width: 600, close: { browser.recalling = false }) {
             VStack(alignment: .leading, spacing: 14) {
-                Hunt(text: $browser.recallHunt, prompt: "Search everywhere you have been", focus: $hunting)
+                Hunt(text: $browser.recallHunt, prompt: "Search everywhere you have been", focus: $hunting,
+                     count: (traces.count, "page"))
 
                 if traces.isEmpty {
                     Card { Nothing(browser.recallHunt.isEmpty ? "Nothing yet." : "Nothing matches.") }
@@ -113,9 +114,6 @@ struct HistoryPanel: View {
                 sweeps
             } else {
                 HStack {
-                    Text(traces.count == 1 ? "1 page" : "\(traces.count) pages")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Palette.muted)
                     Spacer()
                     Pill("Clear…") { withAnimation(Motion.settle) { browser.recallMode = .clearing } }
                 }

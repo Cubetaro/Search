@@ -1433,7 +1433,9 @@ struct BookmarksPanel: View {
     var body: some View {
         Plate("Bookmarks", width: 600, close: { browser.bookmarking = false }) {
             VStack(alignment: .leading, spacing: 14) {
-                Hunt(text: $query, prompt: "Search bookmarks", focus: $hunting)
+                Hunt(text: $query, prompt: "Search bookmarks", focus: $hunting,
+                     count: (query.isEmpty ? bookmarks.count : bookmarks.matches(query).count,
+                             query.isEmpty ? "bookmark" : "match"))
                     .onSubmit(openFirst)
 
                 if bookmarks.isEmpty {
@@ -1477,9 +1479,6 @@ struct BookmarksPanel: View {
                 Pill("File…") { browser.importFile() }
                 Spacer()
                 Pill("New Folder…") { bookmarks.askNewFolder(in: nil) }
-                Text(bookmarks.count == 1 ? "1 bookmark" : "\(bookmarks.count) bookmarks")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Palette.muted)
             }
         }
         .animation(Motion.settle, value: query.isEmpty)

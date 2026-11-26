@@ -200,6 +200,9 @@ struct Hunt: View {
     @Binding var text: String
     var prompt = "Search"
     var focus: FocusState<Bool>.Binding
+    /// How many the list under the field holds, at the field's far end, and
+    /// of what, for reading aloud.
+    var count: (Int, String)? = nil
 
     var body: some View {
         HStack(spacing: 8) {
@@ -216,6 +219,13 @@ struct Hunt: View {
                     .focused(focus)
             }
             .font(.system(size: 13))
+            if let (number, of) = count {
+                Text("\(number)")
+                    .font(.system(size: 12))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.muted)
+                    .accessibilityLabel("\(number) \(of)\(number == 1 ? "" : of.hasSuffix("ch") ? "es" : "s")")
+            }
             if !text.isEmpty {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill")
