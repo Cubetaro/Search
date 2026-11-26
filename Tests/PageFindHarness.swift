@@ -278,7 +278,7 @@ private final class PageFindHarness: NSObject, NSApplicationDelegate {
     /// the page's own colour, and Next makes the match's quiet again.
     private func checkHandSelectionStaysVisible() async {
         let quiet = """
-        [...document.adoptedStyleSheets].some(sheet => [...sheet.cssRules].some(rule => (rule.selectorText || '').includes('::selection')))
+        [...document.adoptedStyleSheets].some(sheet => [...sheet.cssRules].some(rule => (rule.selectorText || '').includes('::selection') && rule.cssText.includes('transparent')))
         """
         let first = await update("orchid")
         check(first.found, "A search for the selection check finds its word")
@@ -294,10 +294,15 @@ private final class PageFindHarness: NSObject, NSApplicationDelegate {
         })()
         """)
         try? await Task.sleep(for: .milliseconds(50))
-        check((try? await evaluate(quiet)) as? Bool == false, "A selection made by hand keeps the page's own colour")
+        check((try? await evaluate(quiet)) as? Bool == false, "A selection made by hand is not drawn see-through")
+        let painting = """
+        [...document.adoptedStyleSheets].some(sheet => [...sheet.cssRules].some(rule => (rule.selectorText || '').includes('::highlight')))
+        """
+        check((try? await evaluate(painting)) as? Bool == true, "The matches stay painted beside a selection made by hand")
         _ = await update("orchid")
         try? await Task.sleep(for: .milliseconds(50))
         check((try? await evaluate(quiet)) as? Bool == true, "Next draws the match's selection quiet again")
+        check((try? await evaluate(painting)) as? Bool == true, "Next paints the matches again")
         _ = await clear()
         try? await Task.sleep(for: .milliseconds(50))
         check((try? await evaluate(quiet)) as? Bool == false, "Clear leaves no quiet selection behind")
